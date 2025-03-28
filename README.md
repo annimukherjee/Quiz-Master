@@ -36,15 +36,15 @@ Subject2:
             q1
             q2
             q3
+    Chapter2:
+        Quiz1:
+            q1
+            q2
+            q3
         Quiz2
             q1
             q2
-            q3
-        Quiz3
-            q1
-            q2
-            q3
-    
+            q3    
 ```
 
 The admin account must pre-exist in the database when the application is initialized.

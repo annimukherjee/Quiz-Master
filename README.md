@@ -18,22 +18,33 @@
 ```
 Subject1:
     Chapter1:
-        Question1
-        Question2
-        Question3
-    Chapter2:
-        Question1
-        Question2
-        Question3
+        Quiz1
+            q1
+            q2
+            q3
+        Quiz2
+            q1
+            q2
+            q3
+        Quiz3
+            q1
+            q2
+            q3 
 Subject2:
     Chapter1:
-        Question1
-        Question2
-        Question3
-    Chapter2:
-        Question1
-        Question2
-        Question3
+        Quiz1
+            q1
+            q2
+            q3
+        Quiz2
+            q1
+            q2
+            q3
+        Quiz3
+            q1
+            q2
+            q3
+    
 ```
 
 The admin account must pre-exist in the database when the application is initialized.
@@ -104,8 +115,8 @@ Stores the scores and details of a user's quiz attempt.
 
 ```
 id - primary key
-quiz_id (foreign key-quiz)
-user_id (foreign key-user)
+quiz_id (foreign key-quiz) [cannot be unique]
+user_id (foreign key-user) [cannot be unique]
 time_stamp_of_attempt
 total_scored
 etc: Additional fields (if any)

@@ -114,7 +114,7 @@ etc: Additional fields (if any)
 
 ### Wireframe
 
-<img src="attachment:b778a082-ed46-4d47-8593-8a0d38ffa1ac.png" width="80%">
+<img src="https://github.com/user-attachments/assets/b4e35be0-1716-4149-8421-22ea8407b6ba" width="80%">
 
 
 

@@ -173,28 +173,54 @@ Note: The database must be created programmatically (via table creation or model
  The application should send daily reminders to users on mail
 
 
-Check if a user has not visited or a new quiz is created by the admin
-If yes, then send the alert asking them to visit and attempt the quiz if it is relevant to them
-The reminder can be sent in the evening, every day (students can choose the time)
+  - Check if a user has not visited or a new quiz is created by the admin
+  - If yes, then send the alert asking them to visit and attempt the quiz if it is relevant to them
+  - The reminder can be sent in the evening, every day (students can choose the time)
 
 
-b. Scheduled Job - Monthly Activity Report - Devise a monthly report for the user created using HTML and sent via mail.
+#### b. Scheduled Job - Monthly Activity Report
+Devise a monthly report for the user created using HTML and sent via mail.
 
 
-The activity report can include quiz details, how many quizzes taken in a month, their score, average score, ranking in the quiz etc.
-For the monthly report to be sent, start a job on the first day of every month → create a report using the above parameters → send it as an email
+- The activity report can include quiz details, how many quizzes taken in a month, their score, average score, ranking in the quiz etc.
+- For the monthly report to be sent
+  - start a job on the first day of every month → create a report using the above parameters → send it as an email
 
 
-c.1 User Triggered Async Job - Export as CSV - Devise a CSV format details for the quizzes completed by the user
+#### c.1 User Triggered Async Job - Export as CSV
+
+Devise a CSV format details for the quizzes completed by the user
+
 This export is meant to download the quiz details (quiz_id, chapter_id,  date_of_quiz, score, remarks etc.)
+
 Have a dashboard from where the user can trigger the export
 This should trigger a batch job, and send an alert once done
+
 OR
-c.2 User Triggered Async Job - Export as CSV - Devise a CSV format details for the all quizzes to be seen by the admin
-This export is meant to download the user details (user_id, quizzes_taken, average score (performance), etc.)
-Have a dashboard from where the admin can trigger the export
-This should trigger a batch job, and send an alert once done
-1. Performance and Caching
-Add caching where required to increase the performance
-Add cache expiry
-API Performance
+
+#### c.2 User Triggered Async Job - Export as CSV
+
+- Devise a CSV format details for the all quizzes to be seen by the admin
+- This export is meant to download the user details (user_id, quizzes_taken, average score (performance), etc.)
+- Have a dashboard from where the admin can trigger the export
+- This should trigger a batch job, and send an alert once done
+
+
+### Performance and Caching
+- Add caching where required to increase the performance (only for a couple of endpoints)
+- Add cache expiry
+- API Performance
+
+
+### Recommended Functionalities
+- Well-designed PDF reports for Monthly activity reports (Students can choose between HTML and PDF reports)
+- External APIs/libraries for creating charts, e.g. ChartJS
+- Implementing frontend validation on all the form fields using HTML5 form validation or JavaScript
+- Implementing backend validation within your APIs
+
+
+### Optional Functionalities
+- Provide styling and aesthetics to your application by creating a beautiful front end using simple CSS or Bootstrap
+- Implement a dummy payment portal (just a view taking payment details from user for paid quizzes)
+
+

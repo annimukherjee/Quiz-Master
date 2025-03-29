@@ -1,0 +1,129 @@
+# app/api/user.py
+from flask import request, jsonify
+from flask_login import login_required, current_user
+from app.models import Subject, Chapter, Quiz, Question, Score
+from app import db
+from app.api import api_bp
+from datetime import datetime
+
+# User dashboard
+@api_bp.route('/user/subjects', methods=['GET'])
+@login_required
+def get_user_subjects():
+    subjects = Subject.query.all()
+    return jsonify({
+        'subjects': [subject.to_dict() for subject in subjects]
+    })
+
+@api_bp.route('/user/chapters', methods=['GET'])
+@login_required
+def get_user_chapters():
+    subject_id = request.args.get('subject_id', type=int)
+    if subject_id:
+        chapters = Chapter.query.filter_by(subject_id=subject_id).all()
+    else:
+        chapters = Chapter.query.all()
+    return jsonify({
+        'chapters': [chapter.to_dict() for chapter in chapters]
+    })
+
+@api_bp.route('/user/quizzes', methods=['GET'])
+@login_required
+def get_user_quizzes():
+    chapter_id = request.args.get('chapter_id', type=int)
+    if chapter_id:
+        quizzes = Quiz.query.filter_by(chapter_id=chapter_id).all()
+    else:
+        quizzes = Quiz.query.all()
+    return jsonify({
+        'quizzes': [quiz.to_dict() for quiz in quizzes]
+    })
+
+@api_bp.route('/user/quiz/<int:quiz_id>', methods=['GET'])
+@login_required
+def get_quiz_details(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    
+    return jsonify({
+        'quiz': quiz.to_dict(),
+        'questions': [question.to_dict(include_correct=False) for question in questions]
+    })
+
+@api_bp.route('/user/quiz/<int:quiz_id>/submit', methods=['POST'])
+@login_required
+def submit_quiz(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    data = request.get_json()
+    answers = data.get('answers', {})
+    
+    # Get all questions for this quiz
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    
+    # Calculate score
+    total_questions = len(questions)
+    correct_answers = 0
+    
+    for question in questions:
+        question_id_str = str(question.id)
+        if question_id_str in answers and answers[question_id_str] == question.correct_option:
+            correct_answers += 1
+    
+    # Save score
+    score = Score(
+        quiz_id=quiz_id,
+        user_id=current_user.id,
+        time_stamp_of_attempt=datetime.utcnow(),
+        total_scored=correct_answers,
+        max_score=total_questions
+    )
+    
+    db.session.add(score)
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Quiz submitted successfully',
+        'score': score.to_dict()
+    })
+
+@api_bp.route('/user/scores', methods=['GET'])
+@login_required
+def get_user_scores():
+    scores = Score.query.filter_by(user_id=current_user.id).all()
+    
+    result = []
+    for score in scores:
+        quiz = Quiz.query.get(score.quiz_id)
+        chapter = Chapter.query.get(quiz.chapter_id)
+        subject = Subject.query.get(chapter.subject_id)
+        
+        result.append({
+            **score.to_dict(),
+            'quiz': quiz.to_dict(),
+            'chapter': chapter.to_dict(),
+            'subject': subject.to_dict()
+        })
+    
+    return jsonify({
+        'scores': result
+    })
+
+
+# app/api/user.py
+# Add these endpoints
+
+@api_bp.route('/user/subjects/<int:subject_id>', methods=['GET'])
+@login_required
+def get_user_subject(subject_id):
+    subject = Subject.query.get_or_404(subject_id)
+    return jsonify({
+        'subject': subject.to_dict()
+    })
+
+@api_bp.route('/user/chapters/<int:chapter_id>', methods=['GET'])
+@login_required
+def get_user_chapter(chapter_id):
+    chapter = Chapter.query.get_or_404(chapter_id)
+    return jsonify({
+        'chapter': chapter.to_dict()
+    })

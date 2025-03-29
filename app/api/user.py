@@ -2,7 +2,7 @@
 from flask import request, jsonify
 from flask_login import login_required, current_user
 from app.models import Subject, Chapter, Quiz, Question, Score
-from app import db
+from app.extensions import db
 from app.api import api_bp
 from datetime import datetime
 
@@ -43,6 +43,15 @@ def get_user_quizzes():
 @login_required
 def get_quiz_details(quiz_id):
     quiz = Quiz.query.get_or_404(quiz_id)
+    
+    # Check if the quiz is available
+    now = datetime.now().date()
+    if quiz.date_of_quiz > now:
+        return jsonify({'message': 'This quiz is not yet available'}), 403
+    
+    if quiz.end_date and now > quiz.end_date:
+        return jsonify({'message': 'This quiz has expired'}), 403
+    
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
     
     return jsonify({
@@ -50,10 +59,21 @@ def get_quiz_details(quiz_id):
         'questions': [question.to_dict(include_correct=False) for question in questions]
     })
 
+# Do the same for submit_quiz endpoint:
 @api_bp.route('/user/quiz/<int:quiz_id>/submit', methods=['POST'])
 @login_required
 def submit_quiz(quiz_id):
     quiz = Quiz.query.get_or_404(quiz_id)
+    
+    # Check if the quiz is available
+    now = datetime.now().date()
+    if quiz.date_of_quiz > now:
+        return jsonify({'message': 'This quiz is not yet available'}), 403
+    
+    if quiz.end_date and now > quiz.end_date:
+        return jsonify({'message': 'This quiz has expired and can no longer be submitted'}), 403
+
+
     data = request.get_json()
     answers = data.get('answers', {})
     

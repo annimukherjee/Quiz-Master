@@ -1,0 +1,21 @@
+Hello {{ user.full_name }},
+
+{% if message_type == 'inactivity' %}
+We noticed you haven't been active on Quiz Master recently. We miss you!
+Come back and continue your learning journey. Regular practice helps reinforce your knowledge.
+{% elif message_type == 'new_quizzes' %}
+We have some new quizzes that might interest you:
+
+{% for quiz in quizzes %}
+- {{ quiz.subject_name }} - {{ quiz.chapter_name }} (Available from: {{ quiz.quiz_date }})
+{% endfor %}
+{% else %}
+Don't forget to practice regularly with our quizzes to improve your skills!
+{% endif %}
+
+Visit Quiz Master Now: http://localhost:5000/
+
+Happy learning!
+The Quiz Master Team
+
+This is an automated message from Quiz Master. Please do not reply to this email.

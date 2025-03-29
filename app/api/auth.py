@@ -5,7 +5,7 @@ from flask_login import login_user, logout_user, current_user
 from urllib.parse import urlparse
 
 from app.models import User, Role
-from app import db
+from app.extensions import db
 from app.api import api_bp
 from datetime import datetime
 

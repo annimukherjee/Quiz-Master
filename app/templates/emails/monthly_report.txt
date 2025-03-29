@@ -1,0 +1,32 @@
+# Quiz Master - Monthly Report - {{ month }}
+
+Hello {{ user.full_name }},
+
+Here's your Quiz Master performance summary for {{ month }}:
+
+## Quiz Attempts
+You attempted {{ total_attempts }} quizzes this month.
+
+## Average Score
+{{ avg_score }}%
+
+{% if rank > 0 %}
+## Your Ranking
+You ranked #{{ rank }} out of {{ total_users }} users this month.
+{% endif %}
+
+{% if subject_stats %}
+## Subject Performance
+{% for subject in subject_stats %}
+- {{ subject.subject_name }}: {{ subject.percentage }}% ({{ subject.attempts }} attempts)
+{% endfor %}
+{% endif %}
+
+Keep up the good work! Regular practice will help you improve your knowledge.
+
+Visit Quiz Master Now: http://localhost:5000/
+
+Happy learning!
+The Quiz Master Team
+
+This is an automated message from Quiz Master. Please do not reply to this email.

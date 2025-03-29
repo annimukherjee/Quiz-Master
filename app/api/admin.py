@@ -2,11 +2,14 @@
 from flask import request, jsonify
 from flask_login import login_required, current_user
 from app.models import User, Role, Subject, Chapter, Quiz, Question, Score
-from app import db
+from app.extensions import db
 from app.api import api_bp
 from datetime import datetime
 from sqlalchemy import func
 from sqlalchemy.sql import text
+
+from app.tasks.reminder_tasks import send_daily_reminders
+from app.tasks.report_tasks import send_monthly_reports
 
 # Admin middleware
 def admin_required(f):
@@ -169,12 +172,16 @@ def create_quiz():
     
     try:
         date_of_quiz = datetime.strptime(data.get('date_of_quiz'), '%Y-%m-%d').date()
+        end_date = None
+        if data.get('end_date'):
+            end_date = datetime.strptime(data.get('end_date'), '%Y-%m-%d').date()
     except ValueError:
         return jsonify({'message': 'Invalid date format'}), 400
     
     new_quiz = Quiz(
         chapter_id=data.get('chapter_id'),
         date_of_quiz=date_of_quiz,
+        end_date=end_date,
         time_duration=data.get('time_duration'),
         remarks=data.get('remarks')
     )
@@ -195,7 +202,16 @@ def update_quiz(quiz_id):
         try:
             quiz.date_of_quiz = datetime.strptime(data.get('date_of_quiz'), '%Y-%m-%d').date()
         except ValueError:
-            return jsonify({'message': 'Invalid date format'}), 400
+            return jsonify({'message': 'Invalid date format for start date'}), 400
+    
+    if 'end_date' in data:
+        try:
+            if data.get('end_date'):
+                quiz.end_date = datetime.strptime(data.get('end_date'), '%Y-%m-%d').date()
+            else:
+                quiz.end_date = None
+        except ValueError:
+            return jsonify({'message': 'Invalid date format for end date'}), 400
     
     quiz.chapter_id = data.get('chapter_id', quiz.chapter_id)
     quiz.time_duration = data.get('time_duration', quiz.time_duration)
@@ -382,4 +398,25 @@ def get_admin_statistics():
         'recent_users': [user.to_dict() for user in recent_users],
         'top_quizzes': top_quizzes,
         'subject_stats': subject_stats
+    })
+
+
+@api_bp.route('/admin/test/daily-reminders', methods=['GET'])
+@admin_required
+def test_daily_reminders():
+    """Test endpoint to send daily reminders immediately."""
+    task = send_daily_reminders.delay()
+    return jsonify({
+        'message': 'Daily reminder job initiated',
+        'task_id': str(task.id)
+    })
+
+@api_bp.route('/admin/test/monthly-reports', methods=['GET'])
+@admin_required
+def test_monthly_reports():
+    """Test endpoint to send monthly reports immediately."""
+    task = send_monthly_reports.delay()
+    return jsonify({
+        'message': 'Monthly report job initiated',
+        'task_id': str(task.id)
     })

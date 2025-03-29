@@ -1,0 +1,79 @@
+<!-- app/templates/emails/daily_reminder.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header {
+            background-color: #4A6FDC;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .quiz-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #4A6FDC;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Quiz Master</h1>
+    </div>
+    
+    <div class="content">
+        <h2>Hello {{ user.full_name }},</h2>
+        
+        {% if message_type == 'inactivity' %}
+            <p>We noticed you haven't been active on Quiz Master recently. We miss you!</p>
+            <p>Come back and continue your learning journey. Regular practice helps reinforce your knowledge.</p>
+        {% elif message_type == 'new_quizzes' %}
+            <p>We have some new quizzes that might interest you:</p>
+            
+            {% for quiz in quizzes %}
+                <div class="quiz-item">
+                    <h3>{{ quiz.subject_name }} - {{ quiz.chapter_name }}</h3>
+                    <p>Available from: {{ quiz.quiz_date }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Don't forget to practice regularly with our quizzes to improve your skills!</p>
+        {% endif %}
+        
+        <a href="http://localhost:5000/" class="cta-button">Visit Quiz Master Now</a>
+        
+        <p>Happy learning!</p>
+        <p>The Quiz Master Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated message from Quiz Master. Please do not reply to this email.</p>
+    </div>
+</body>
+</html>

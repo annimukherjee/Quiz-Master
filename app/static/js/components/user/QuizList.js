@@ -108,8 +108,25 @@ Vue.component('quiz-list', {
             return formatted.trim();
         },
         isQuizAvailable(quiz) {
-            const quizDate = new Date(quiz.date_of_quiz);
-            return quizDate <= this.now;
+            const now = new Date();
+            const quizStartDate = new Date(quiz.date_of_quiz);
+            
+            // Check if the quiz has started
+            if (quizStartDate > now) {
+                return false;
+            }
+            
+            // Check if the quiz has ended
+            if (quiz.end_date) {
+                const quizEndDate = new Date(quiz.end_date);
+                // Set end date to 23:59:59 on that day
+                quizEndDate.setHours(23, 59, 59);
+                if (now > quizEndDate) {
+                    return false;
+                }
+            }
+            
+            return true;
         },
         isQuizTaken(quizId) {
             return this.previousScores.hasOwnProperty(quizId);
@@ -141,8 +158,15 @@ Vue.component('quiz-list', {
                          :class="{'bg-light': !isQuizAvailable(quiz), 'bg-primary text-white': isQuizAvailable(quiz)}">
                         <h5 class="mb-0">Quiz: {{ formatDate(quiz.date_of_quiz) }}</h5>
                         <span class="badge rounded-pill" 
-                              :class="{'bg-success': isQuizTaken(quiz.id), 'bg-warning': !isQuizTaken(quiz.id) && isQuizAvailable(quiz), 'bg-secondary': !isQuizAvailable(quiz)}">
-                            {{ isQuizTaken(quiz.id) ? 'Completed' : (isQuizAvailable(quiz) ? 'Available' : 'Upcoming') }}
+                            :class="{
+                                'bg-success': isQuizTaken(quiz.id), 
+                                'bg-warning': !isQuizTaken(quiz.id) && isQuizAvailable(quiz), 
+                                'bg-secondary': !isQuizAvailable(quiz) && new Date(quiz.date_of_quiz) > now,
+                                'bg-danger': !isQuizAvailable(quiz) && quiz.end_date && new Date(quiz.end_date) < now
+                            }">
+                            {{ isQuizTaken(quiz.id) ? 'Completed' : 
+                            (isQuizAvailable(quiz) ? 'Available' : 
+                                (new Date(quiz.date_of_quiz) > now ? 'Upcoming' : 'Expired')) }}
                         </span>
                     </div>
                     <div class="card-body">
@@ -167,7 +191,12 @@ Vue.component('quiz-list', {
                                     {{ isQuizTaken(quiz.id) ? 'Retake Quiz' : 'Start Quiz' }}
                                 </button>
                                 <div v-else class="text-muted">
-                                    <i class="bi bi-clock"></i> Available on {{ formatDate(quiz.date_of_quiz) }}
+                                    <template v-if="new Date(quiz.date_of_quiz) > now">
+                                        <i class="bi bi-clock"></i> Available on {{ formatDate(quiz.date_of_quiz) }}
+                                    </template>
+                                    <template v-else>
+                                        <i class="bi bi-lock"></i> Expired on {{ formatDate(quiz.end_date) }}
+                                    </template>
                                 </div>
                             </div>
                         </div>

@@ -20,6 +20,7 @@ Vue.component('quiz-manager', {
                 id: null,
                 chapter_id: this.chapterId,
                 date_of_quiz: new Date().toISOString().split('T')[0], // Default to today
+                end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default to 7 days later
                 time_duration: '01:00', // Default to 1 hour
                 remarks: ''
             },
@@ -195,7 +196,7 @@ Vue.component('quiz-manager', {
                 <div class="card-body">
                     <form @submit.prevent="saveQuiz">
                         <div class="mb-3">
-                            <label for="quizDate" class="form-label">Quiz Date *</label>
+                            <label for="quizDate" class="form-label">Start Date *</label>
                             <input 
                                 type="date" 
                                 class="form-control" 
@@ -203,6 +204,17 @@ Vue.component('quiz-manager', {
                                 v-model="currentQuiz.date_of_quiz" 
                                 required
                             >
+                        </div>
+                        <div class="mb-3">
+                            <label for="quizEndDate" class="form-label">End Date *</label>
+                            <input 
+                                type="date" 
+                                class="form-control" 
+                                id="quizEndDate" 
+                                v-model="currentQuiz.end_date" 
+                                required
+                            >
+                            <div class="form-text">Quizzes cannot be started after this date</div>
                         </div>
                         <div class="mb-3">
                             <label for="timeDuration" class="form-label">Time Duration (HH:MM) *</label>

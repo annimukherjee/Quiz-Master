@@ -1,5 +1,5 @@
 # app/models.py
-from app import db, login_manager
+from app.extensions import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -79,6 +79,7 @@ class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'), nullable=False)
     date_of_quiz = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=True)  # Add end date field
     time_duration = db.Column(db.String(5), nullable=False)  # Format: HH:MM
     remarks = db.Column(db.Text, nullable=True)
     questions = db.relationship('Question', backref='quiz', lazy=True)
@@ -89,9 +90,11 @@ class Quiz(db.Model):
             'id': self.id,
             'chapter_id': self.chapter_id,
             'date_of_quiz': self.date_of_quiz.isoformat(),
+            'end_date': self.end_date.isoformat() if self.end_date else None,
             'time_duration': self.time_duration,
             'remarks': self.remarks
         }
+
 
 
 
@@ -146,11 +149,26 @@ class Score(db.Model):
 
     
 
+class ExportJob(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='pending')  # pending, processing, completed, failed
+    file_name = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'status': self.status,
+            'file_name': self.file_name,
+            'created_at': self.created_at.isoformat(),
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None
+        }
 
 
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+# @login_manager.user_loader
+# def load_user(user_id):
+#     return User.query.get(int(user_id))
 
 

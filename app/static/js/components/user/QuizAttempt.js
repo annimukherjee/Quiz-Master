@@ -87,7 +87,18 @@ Vue.component('quiz-attempt', {
                 this.error = null;
             } catch (error) {
                 console.error('Error fetching quiz data:', error);
-                this.error = 'Failed to load quiz. Please try again.';
+                if (error.response && error.response.data && error.response.data.message) {
+                    this.error = error.response.data.message;
+                } else {
+                    this.error = 'Failed to load quiz. Please try again.';
+                }
+                
+                // Add a button to go back to dashboard
+                setTimeout(() => {
+                    if (this.error) {
+                        this.$root.navigateTo('/user/dashboard');
+                    }
+                }, 3000);
             } finally {
                 this.loading = false;
             }
@@ -182,7 +193,10 @@ Vue.component('quiz-attempt', {
     },
     template: `
         <div>
-            <div v-if="error" class="alert alert-danger">{{ error }}</div>
+            <div v-if="error" class="alert alert-danger text-center">
+                <h3><i class="bi bi-exclamation-triangle"></i> {{ error }}</h3>
+                <p class="mt-3">Redirecting back to dashboard...</p>
+            </div>
             
             <div v-if="loading && !quizCompleted" class="text-center py-5">
                 <div class="spinner-border text-primary" role="status">

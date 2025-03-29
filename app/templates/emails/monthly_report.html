@@ -1,0 +1,136 @@
+<!-- app/templates/emails/monthly_report.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header {
+            background-color: #4A6FDC;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .stats-box {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .stat-item {
+            margin-bottom: 10px;
+        }
+        .progress-bar {
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            height: 20px;
+            width: 100%;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            background-color: #4A6FDC;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+        .chart-container {
+            margin: 20px 0;
+        }
+        .subject-item {
+            margin-bottom: 15px;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #4A6FDC;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Quiz Master - Monthly Report</h1>
+        <h2>{{ month }}</h2>
+    </div>
+    
+    <div class="content">
+        <h2>Hello {{ user.full_name }},</h2>
+        
+        <p>Here's your Quiz Master performance summary for {{ month }}:</p>
+        
+        <div class="stats-box">
+            <div class="stat-item">
+                <h3>Quiz Attempts</h3>
+                <p>You attempted <strong>{{ total_attempts }}</strong> quizzes this month.</p>
+            </div>
+            
+            <div class="stat-item">
+                <h3>Average Score</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ avg_score }}%;">{{ avg_score }}%</div>
+                </div>
+            </div>
+            
+            {% if rank > 0 %}
+            <div class="stat-item">
+                <h3>Your Ranking</h3>
+                <p>You ranked <strong>#{{ rank }}</strong> out of {{ total_users }} users this month.</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if chart_image %}
+        <div class="chart-container">
+            <h3>Your Performance Trend</h3>
+            <img src="data:image/png;base64,{{ chart_image }}" alt="Performance Chart" style="max-width: 100%;">
+        </div>
+        {% endif %}
+        
+        {% if subject_stats %}
+        <h3>Subject Performance</h3>
+        
+        {% for subject in subject_stats %}
+        <div class="subject-item">
+            <h4>{{ subject.subject_name }}</h4>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ subject.percentage }}%;">{{ subject.percentage }}%</div>
+            </div>
+            <p>Attempts: {{ subject.attempts }}</p>
+        </div>
+        {% endfor %}
+        {% endif %}
+        
+        <p>Keep up the good work! Regular practice will help you improve your knowledge.</p>
+        
+        <a href="http://localhost:5000/" class="cta-button">Visit Quiz Master Now</a>
+        
+        <p>Happy learning!</p>
+        <p>The Quiz Master Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated message from Quiz Master. Please do not reply to this email.</p>
+    </div>
+</body>
+</html>

@@ -2,7 +2,12 @@
 Vue.component('admin-dashboard', {
     data() {
         return {
-            activeView: 'subjects', // Default view
+            activeView: 'stats', // Change default to stats
+            views: [
+                { id: 'stats', name: 'Statistics', icon: 'bi-bar-chart-fill' },
+                { id: 'subjects', name: 'Subjects', icon: 'bi-book' },
+                { id: 'users', name: 'Users', icon: 'bi-people' }
+            ],
             breadcrumbs: [],
             subjectId: null,
             subjectName: '',
@@ -147,6 +152,11 @@ Vue.component('admin-dashboard', {
             <div class="row">
                 <div class="col-12">
                     <!-- Components for each view -->
+
+                    <admin-stats-dashboard
+                    v-if="activeView === 'stats'"
+                ></admin-stats-dashboard>
+                    
                     <subject-manager 
                         v-if="activeView === 'subjects'"
                         @subject-selected="handleSubjectSelected"

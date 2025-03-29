@@ -9,6 +9,21 @@ const routes = {
     '/user/quiz': 'quiz-attempt',
 };
 
+
+
+const style = document.createElement('style');
+style.textContent = `
+    .hover-shadow {
+        transition: all 0.3s ease;
+    }
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+`;
+document.head.appendChild(style);
+
+
 // Create Vue app
 const app = new Vue({
     el: '#app',
@@ -121,25 +136,25 @@ const app = new Vue({
             </nav>
             
             <div class="container">
-                <div v-if="loading" class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
+            <div v-if="loading" class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
-                <template v-else>
-                    <home-view v-if="currentView === 'home'"></home-view>
-                    <login-form v-else-if="currentView === 'login'" @login-success="checkAuth"></login-form>
-                    <register-form v-else-if="currentView === 'register'" @register-success="navigateTo('/login')"></register-form>
-                    <admin-dashboard v-else-if="currentView === 'admin-dashboard' && isAdmin"></admin-dashboard>
-                    <user-dashboard v-else-if="currentView === 'user-dashboard' && !isAdmin" @start-quiz="startQuiz"></user-dashboard>
-                    <quiz-attempt v-else-if="currentView === 'quiz-attempt' && !isAdmin" :quiz-id="currentQuizId"></quiz-attempt>
-                    <div v-else class="alert alert-danger">
-                        <h3>Page Not Found or Access Denied</h3>
-                        <p>The page you're looking for doesn't exist or you don't have permission to access it.</p>
-                        <button class="btn btn-primary" @click="navigateTo('/')">Go Home</button>
-                    </div>
-                </template>
             </div>
+            <template v-else>
+                <home-view v-if="currentView === 'home'"></home-view>
+                <login-form v-else-if="currentView === 'login'" @login-success="checkAuth"></login-form>
+                <register-form v-else-if="currentView === 'register'" @register-success="navigateTo('/login')"></register-form>
+                <admin-dashboard v-else-if="currentView === 'admin-dashboard' && isAdmin"></admin-dashboard>
+                <user-dashboard v-else-if="currentView === 'user-dashboard' && !isAdmin" @start-quiz="startQuiz"></user-dashboard>
+                <quiz-attempt v-else-if="currentView === 'quiz-attempt' && !isAdmin" :quiz-id="currentQuizId"></quiz-attempt>
+                <div v-else class="alert alert-danger">
+                    <h3>Page Not Found or Access Denied</h3>
+                    <p>The page you're looking for doesn't exist or you don't have permission to access it.</p>
+                    <button class="btn btn-primary" @click="navigateTo('/')">Go Home</button>
+                </div>
+            </template>
+        </div>
             
             <footer class="bg-light py-4 mt-5">
                 <div class="container text-center">

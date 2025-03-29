@@ -47,8 +47,11 @@ Vue.component('quiz-attempt', {
         },
         canSubmit() {
             // Check if all questions have been answered
-            return Object.keys(this.userAnswers).length === this.questions.length;
+            console.log('Checking if can submit:', Object.keys(this.userAnswers).length, '===', this.questions.length);
+            return Object.keys(this.userAnswers).length >= this.questions.length;
         }
+
+        
     },
     watch: {
         quizId: {
@@ -106,7 +109,13 @@ Vue.component('quiz-attempt', {
             }, 1000);
         },
         selectAnswer(questionId, optionIndex) {
-            this.userAnswers[questionId] = optionIndex;
+            // Set the answer in the userAnswers object
+            Vue.set(this.userAnswers, questionId, optionIndex);
+            // or use this.$set(this.userAnswers, questionId, optionIndex);
+            
+            console.log('Selected answer:', questionId, optionIndex);
+            console.log('Current answers:', this.userAnswers);
+            console.log('Questions answered:', Object.keys(this.userAnswers).length, 'of', this.questions.length);
             
             // Show immediate feedback
             this.showFeedback = true;

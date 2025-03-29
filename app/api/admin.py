@@ -309,3 +309,75 @@ def get_quiz(quiz_id):
     return jsonify({
         'quiz': quiz.to_dict()
     })
+
+
+
+@api_bp.route('/admin/statistics', methods=['GET'])
+@admin_required
+def get_admin_statistics():
+    # Get counts
+    total_subjects = Subject.query.count()
+    total_chapters = Chapter.query.count()
+    total_quizzes = Quiz.query.count()
+    total_questions = Question.query.count()
+    total_users = User.query.filter_by(role=Role.USER).count()
+    total_attempts = Score.query.count()
+    
+    # Get recent users (last 5)
+    recent_users = User.query.filter_by(role=Role.USER).order_by(User.id.desc()).limit(5).all()
+    
+    # Get quiz completion statistics
+    quiz_stats = db.session.query(
+        Quiz.id,
+        func.count(Score.id).label('attempt_count'),
+        func.avg(Score.total_scored * 100.0 / Score.max_score).label('avg_score')
+    ).join(Score, Quiz.id == Score.quiz_id, isouter=True).group_by(Quiz.id).order_by(text('attempt_count DESC')).limit(5).all()
+    
+    top_quizzes = []
+    for quiz_id, attempt_count, avg_score in quiz_stats:
+        quiz = Quiz.query.get(quiz_id)
+        chapter = Chapter.query.get(quiz.chapter_id)
+        subject = Subject.query.get(chapter.subject_id)
+        
+        if avg_score is None:
+            avg_score = 0
+            
+        top_quizzes.append({
+            'quiz_id': quiz_id,
+            'quiz_date': quiz.date_of_quiz.isoformat(),
+            'chapter_name': chapter.name,
+            'subject_name': subject.name,
+            'attempt_count': attempt_count,
+            'avg_score': round(avg_score, 2)
+        })
+    
+    # Get subject statistics
+    subject_stats = []
+    subjects = Subject.query.all()
+    for subject in subjects:
+        chapter_count = Chapter.query.filter_by(subject_id=subject.id).count()
+        
+        # Get all quiz IDs associated with this subject
+        chapter_ids = [c.id for c in Chapter.query.filter_by(subject_id=subject.id).all()]
+        quiz_count = Quiz.query.filter(Quiz.chapter_id.in_(chapter_ids)).count() if chapter_ids else 0
+        
+        subject_stats.append({
+            'subject_id': subject.id,
+            'subject_name': subject.name,
+            'chapter_count': chapter_count,
+            'quiz_count': quiz_count
+        })
+    
+    return jsonify({
+        'counts': {
+            'subjects': total_subjects,
+            'chapters': total_chapters,
+            'quizzes': total_quizzes,
+            'questions': total_questions,
+            'users': total_users,
+            'attempts': total_attempts
+        },
+        'recent_users': [user.to_dict() for user in recent_users],
+        'top_quizzes': top_quizzes,
+        'subject_stats': subject_stats
+    })

@@ -127,3 +127,91 @@ def get_user_chapter(chapter_id):
     return jsonify({
         'chapter': chapter.to_dict()
     })
+
+
+
+@api_bp.route('/user/statistics', methods=['GET'])
+@login_required
+def get_user_statistics():
+    user_id = current_user.id
+    
+    # Get total counts
+    total_attempts = Score.query.filter_by(user_id=user_id).count()
+    
+    # Get scores
+    user_scores = Score.query.filter_by(user_id=user_id).all()
+    
+    # Calculate average score and build score history
+    avg_score = 0
+    total_correct = 0
+    total_questions = 0
+    score_history = []
+    
+    for score in user_scores:
+        total_correct += score.total_scored
+        total_questions += score.max_score
+        
+        quiz = Quiz.query.get(score.quiz_id)
+        chapter = Chapter.query.get(quiz.chapter_id)
+        subject = Subject.query.get(chapter.subject_id)
+        
+        score_history.append({
+            'timestamp': score.time_stamp_of_attempt.isoformat(),
+            'quiz_date': quiz.date_of_quiz.isoformat(),
+            'chapter_name': chapter.name,
+            'subject_name': subject.name,
+            'score': score.total_scored,
+            'max_score': score.max_score,
+            'percentage': round((score.total_scored / score.max_score) * 100, 2)
+        })
+    
+    if total_questions > 0:
+        avg_score = round((total_correct / total_questions) * 100, 2)
+    
+    # Get subject performance
+    subject_performance = {}
+    
+    for score in user_scores:
+        quiz = Quiz.query.get(score.quiz_id)
+        chapter = Chapter.query.get(quiz.chapter_id)
+        subject = Subject.query.get(chapter.subject_id)
+        
+        if subject.id not in subject_performance:
+            subject_performance[subject.id] = {
+                'subject_name': subject.name,
+                'total_correct': 0,
+                'total_questions': 0,
+                'attempts': 0
+            }
+        
+        subject_performance[subject.id]['total_correct'] += score.total_scored
+        subject_performance[subject.id]['total_questions'] += score.max_score
+        subject_performance[subject.id]['attempts'] += 1
+    
+    # Calculate percentages for each subject
+    subject_stats = []
+    for subject_id, data in subject_performance.items():
+        if data['total_questions'] > 0:
+            percentage = round((data['total_correct'] / data['total_questions']) * 100, 2)
+        else:
+            percentage = 0
+            
+        subject_stats.append({
+            'subject_name': data['subject_name'],
+            'percentage': percentage,
+            'attempts': data['attempts']
+        })
+    
+    # Sort by attempts descending
+    subject_stats.sort(key=lambda x: x['attempts'], reverse=True)
+    
+    return jsonify({
+        'total_attempts': total_attempts,
+        'average_score': avg_score,
+        'total_correct': total_correct,
+        'total_questions': total_questions,
+        'score_history': score_history,
+        'subject_stats': subject_stats
+    })
+
+

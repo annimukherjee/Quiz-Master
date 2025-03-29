@@ -2,7 +2,7 @@
 Vue.component('user-dashboard', {
     data() {
         return {
-            activeView: 'subjects',
+            activeView: 'stats', // Change default to stats
             subjectId: null,
             subjectName: '',
             chapterId: null,
@@ -116,6 +116,11 @@ Vue.component('user-dashboard', {
             <div class="row">
                 <div class="col-12">
                     <!-- Components for each view -->
+
+                    <user-stats-dashboard 
+                        v-if="activeView === 'stats'"
+                    ></user-stats-dashboard>
+                    
                     <subject-list 
                         v-if="activeView === 'subjects'"
                         @subject-selected="handleSubjectSelected"

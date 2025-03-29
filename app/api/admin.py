@@ -1,10 +1,12 @@
 # app/api/admin.py
 from flask import request, jsonify
 from flask_login import login_required, current_user
-from app.models import User, Role, Subject, Chapter, Quiz, Question
+from app.models import User, Role, Subject, Chapter, Quiz, Question, Score
 from app import db
 from app.api import api_bp
 from datetime import datetime
+from sqlalchemy import func
+from sqlalchemy.sql import text
 
 # Admin middleware
 def admin_required(f):

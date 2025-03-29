@@ -144,9 +144,13 @@ class Score(db.Model):
             'max_score': self.max_score
         }
 
+    
+
 
 
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+

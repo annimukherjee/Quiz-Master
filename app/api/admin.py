@@ -10,6 +10,8 @@ from sqlalchemy.sql import text
 
 from app.tasks.reminder_tasks import send_daily_reminders
 from app.tasks.report_tasks import send_monthly_reports
+from app.utils.cache import cache, limiter, clear_cache_by_pattern
+
 
 # Admin middleware
 def admin_required(f):
@@ -24,6 +26,7 @@ def admin_required(f):
 # User management
 @api_bp.route('/admin/users', methods=['GET'])
 @admin_required
+@cache.cached(timeout=10, key_prefix="admin_users_list")
 def get_users():
     users = User.query.all()
     return jsonify({
@@ -56,6 +59,11 @@ def create_subject():
 
     db.session.add(new_subject)
     db.session.commit()
+
+    # clear_cache_by_pattern("user_subjects")
+    # clear_cache_by_pattern("admin_statistics")
+
+    
     return jsonify({
         'message': 'Subject created successfully',
         'subject': new_subject.to_dict()
@@ -332,6 +340,7 @@ def get_quiz(quiz_id):
 
 @api_bp.route('/admin/statistics', methods=['GET'])
 @admin_required
+# @cache.cached(timeout=900, key_prefix="admin_statistics")
 def get_admin_statistics():
     # Get counts
     total_subjects = Subject.query.count()
@@ -419,4 +428,63 @@ def test_monthly_reports():
     return jsonify({
         'message': 'Monthly report job initiated',
         'task_id': str(task.id)
+    })
+
+
+
+@api_bp.route('/admin/test/monthly-reports-debug', methods=['GET'])
+@admin_required
+def test_monthly_reports_debug():
+    """Test endpoint to send monthly reports with detailed logging."""
+    
+    # Get the current_user's ID to ensure at least one report is sent
+    admin_id = current_user.id
+    
+    try:
+        # Import the task function
+        from app.tasks.report_tasks import send_monthly_reports
+        
+        # Call the function directly (not as a Celery task) for immediate debugging
+        result = send_monthly_reports()
+        
+        return jsonify({
+            'message': 'Monthly report test completed',
+            'result': str(result)
+        })
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        
+        return jsonify({
+            'message': 'Error executing monthly report task',
+            'error': str(e),
+            'traceback': error_trace
+        }), 500
+
+
+@api_bp.route('/admin/test/monthly-reports-force', methods=['GET'])
+@admin_required
+def test_monthly_reports_force():
+    """Test endpoint to force send monthly reports even if no data exists."""
+    
+    # Get the current user's ID to ensure at least one report is sent
+    user_id = current_user.id
+    
+    # If admin is testing, try sending to a regular user if available
+    if current_user.role == Role.ADMIN:
+        regular_user = User.query.filter_by(role=Role.USER).first()
+        if regular_user:
+            user_id = regular_user.id
+    
+    # Import the task directly
+    from app.tasks.report_tasks import send_monthly_reports
+    
+    # Call task with test_mode=True and specific_user_id
+    task = send_monthly_reports.delay(test_mode=True, specific_user_id=user_id)
+    
+    return jsonify({
+        'message': 'Force monthly report job initiated',
+        'task_id': str(task.id),
+        'target_user_id': user_id,
+        'note': 'This will generate a report using test data if necessary'
     })

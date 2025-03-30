@@ -15,6 +15,16 @@ Vue.component('admin-stats-dashboard', {
     created() {
         this.fetchStatistics();
     },
+    updated() {
+        // Re-initialize charts whenever the component updates
+        // This helps when DOM elements might not be available immediately
+        this.$nextTick(() => {
+            if (this.stats && !this.loading) {
+                this.initCharts();
+            }
+        });
+    },
+    
     methods: {
         async fetchStatistics() {
             this.loading = true;

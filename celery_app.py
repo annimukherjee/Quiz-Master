@@ -1,4 +1,3 @@
-# celery_app.py
 import os
 from celery import Celery
 from celery.schedules import crontab
@@ -15,7 +14,11 @@ celery_app = Celery(
     'quiz_master',
     broker=CELERY_BROKER_URL,
     backend=CELERY_RESULT_BACKEND,
-    include=['app.tasks.reminder_tasks', 'app.tasks.report_tasks']
+    include=[
+        'app.tasks.reminder_tasks', 
+        'app.tasks.report_tasks',
+        'app.tasks.export_tasks'  # Add this line
+    ]
 )
 
 celery_app.conf.update(

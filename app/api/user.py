@@ -5,10 +5,18 @@ from app.models import Subject, Chapter, Quiz, Question, Score
 from app.extensions import db
 from app.api import api_bp
 from datetime import datetime
+from flask import send_from_directory, current_app
+from app.models import ExportRequest
+from app.tasks.export_tasks import generate_user_quiz_history_csv
+import os
+from app.utils.cache import cache, limiter, clear_cache_by_pattern
+
+
 
 # User dashboard
 @api_bp.route('/user/subjects', methods=['GET'])
 @login_required
+# @cache.cached(timeout=3600, key_prefix=lambda: f"user_subjects_{current_user.id}")
 def get_user_subjects():
     subjects = Subject.query.all()
     return jsonify({
@@ -17,6 +25,7 @@ def get_user_subjects():
 
 @api_bp.route('/user/chapters', methods=['GET'])
 @login_required
+# @cache.cached(timeout=1800, key_prefix=lambda: f"user_chapters_{current_user.id}_{request.args.get('subject_id', '')}")
 def get_user_chapters():
     subject_id = request.args.get('subject_id', type=int)
     if subject_id:
@@ -62,6 +71,7 @@ def get_quiz_details(quiz_id):
 # Do the same for submit_quiz endpoint:
 @api_bp.route('/user/quiz/<int:quiz_id>/submit', methods=['POST'])
 @login_required
+# @limiter.limit("20 per minute")  # Prevent abuse
 def submit_quiz(quiz_id):
     quiz = Quiz.query.get_or_404(quiz_id)
     
@@ -108,6 +118,7 @@ def submit_quiz(quiz_id):
 
 @api_bp.route('/user/scores', methods=['GET'])
 @login_required
+# @cache.cached(timeout=600, key_prefix=lambda: f"user_scores_{current_user.id}")
 def get_user_scores():
     scores = Score.query.filter_by(user_id=current_user.id).all()
     
@@ -152,6 +163,7 @@ def get_user_chapter(chapter_id):
 
 @api_bp.route('/user/statistics', methods=['GET'])
 @login_required
+# @cache.cached(timeout=1800, key_prefix=lambda: f"user_stats_{current_user.id}")
 def get_user_statistics():
     user_id = current_user.id
     
@@ -235,3 +247,78 @@ def get_user_statistics():
     })
 
 
+
+
+
+
+
+@api_bp.route('/user/export/quiz-history', methods=['POST'])
+@login_required
+def request_quiz_history_export():
+    """Trigger asynchronous export of user's quiz history."""
+    # Create export request record
+    export_request = ExportRequest(
+        user_id=current_user.id,
+        task_id='pending',  # Will be updated with actual task ID
+        status='pending'
+    )
+    db.session.add(export_request)
+    db.session.commit()
+    
+    # Start Celery task
+    task = generate_user_quiz_history_csv.delay(current_user.id, export_request.id)
+    
+    # Update task ID
+    export_request.task_id = str(task.id)
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Export request received and is being processed.',
+        'export_id': export_request.id,
+        'status': 'pending'
+    })
+
+@api_bp.route('/user/exports', methods=['GET'])
+@login_required
+def get_user_exports():
+    """Get list of user's export requests."""
+    exports = ExportRequest.query.filter_by(user_id=current_user.id).order_by(ExportRequest.created_at.desc()).all()
+    
+    return jsonify({
+        'exports': [export_req.to_dict() for export_req in exports]
+    })
+
+@api_bp.route('/user/export/<int:export_id>', methods=['GET'])
+@login_required
+def get_export_status(export_id):
+    """Get status of a specific export request."""
+    export_req = ExportRequest.query.filter_by(id=export_id, user_id=current_user.id).first()
+    
+    if not export_req:
+        return jsonify({'message': 'Export request not found'}), 404
+    
+    return jsonify({
+        'export': export_req.to_dict()
+    })
+
+@api_bp.route('/user/export/<int:export_id>/download', methods=['GET'])
+@login_required
+def download_export(export_id):
+    """Download a completed export file."""
+    export_req = ExportRequest.query.filter_by(id=export_id, user_id=current_user.id).first()
+    
+    if not export_req:
+        return jsonify({'message': 'Export request not found'}), 404
+        
+    if export_req.status != 'completed' or not export_req.file_name:
+        return jsonify({'message': 'Export is not ready for download'}), 400
+    
+    # Get exports directory path
+    exports_dir = os.path.join(current_app.static_folder, 'exports')
+    
+    # Return file as attachment
+    return send_from_directory(
+        directory=exports_dir,
+        path=export_req.file_name,
+        as_attachment=True
+    )

@@ -14,6 +14,16 @@ Vue.component('user-stats-dashboard', {
     created() {
         this.fetchStatistics();
     },
+    updated() {
+        // Re-initialize charts whenever the component updates
+        // This helps when DOM elements might not be available immediately
+        this.$nextTick(() => {
+            if (this.stats && !this.loading) {
+                this.initCharts();
+            }
+        });
+    },
+
     methods: {
         async fetchStatistics() {
             this.loading = true;
@@ -34,16 +44,47 @@ Vue.component('user-stats-dashboard', {
             }
         },
         initCharts() {
-            this.initProgressChart();
-            this.initSubjectsChart();
-            this.initHistoryChart();
+            console.log("Initializing charts");
+            try {
+                this.initProgressChart();
+                console.log("Progress chart initialized");
+            } catch (error) {
+                console.error("Error initializing progress chart:", error);
+            }
+            
+            try {
+                this.initSubjectsChart();
+                console.log("Subjects chart initialized");
+            } catch (error) {
+                console.error("Error initializing subjects chart:", error);
+            }
+            
+            try {
+                this.initHistoryChart();
+                console.log("History chart initialized");
+            } catch (error) {
+                console.error("Error initializing history chart:", error);
+            }
         },
         initProgressChart() {
             if (this.chartObjects.progressChart) {
                 this.chartObjects.progressChart.destroy();
             }
             
-            const ctx = document.getElementById('progressChart').getContext('2d');
+            const canvas = document.getElementById('progressChart');
+            if (!canvas) {
+                console.error("Canvas element 'progressChart' not found");
+                return;
+            }
+            
+            console.log("Canvas element found:", canvas);
+            const ctx = canvas.getContext('2d');
+            
+            // Log chart data for debugging
+            console.log("Chart data:", {
+                correct: this.stats.total_correct,
+                incorrect: this.stats.total_questions - this.stats.total_correct
+            });
             
             // Create doughnut chart showing overall progress
             this.chartObjects.progressChart = new Chart(ctx, {
@@ -52,8 +93,8 @@ Vue.component('user-stats-dashboard', {
                     labels: ['Correct', 'Incorrect'],
                     datasets: [{
                         data: [
-                            this.stats.total_correct,
-                            this.stats.total_questions - this.stats.total_correct
+                            this.stats.total_correct || 0,
+                            (this.stats.total_questions - this.stats.total_correct) || 0
                         ],
                         backgroundColor: [
                             'rgba(75, 192, 192, 0.7)',
@@ -76,6 +117,8 @@ Vue.component('user-stats-dashboard', {
                     }
                 }
             });
+            
+            console.log("Chart created:", this.chartObjects.progressChart);
         },
         initSubjectsChart() {
             if (this.chartObjects.subjectsChart) {

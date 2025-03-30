@@ -82,6 +82,11 @@ Vue.component('user-dashboard', {
                         <i class="bi bi-bar-chart"></i> My Scores
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" :class="{ active: activeView === 'exports' }" href="#" @click.prevent="navigateTo('exports')">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Exports
+                    </a>
+                </li>
             </ul>
             
             <!-- Breadcrumb navigation for hierarchical views -->
@@ -141,6 +146,11 @@ Vue.component('user-dashboard', {
                     <score-list 
                         v-if="activeView === 'scores'"
                     ></score-list>
+
+                    <export-manager 
+                        v-if="activeView === 'exports'"
+                    ></export-manager>
+                    
                 </div>
             </div>
         </div>
